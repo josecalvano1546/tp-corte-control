@@ -1,5 +1,6 @@
 // Definición de la estructura Producto
 #include <__config>
+#include <iomanip>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -144,13 +145,13 @@ void mostrarListaDocks(Nodo<T> *lista)
     // Recorrer la lista de docks
     while (p != nullptr)
     {
-        std::cout << "Dock Número: " << p->info.nroDock << std::endl;
-        std::cout << "Cantidad de despachos: " << p->info.cantDespacho << std::endl;
+        std::cout << "Dock Número: " << p->info.nroDock << " - Cantidad de despachos: " << p->info.cantDespacho << std::endl;
+
+        std::cout << std::left << std::setw(20) << "Producto" << "Cantidad" << std::endl;
 
         // Mostrar la sublista de productos dentro de este dock
         mostrarListaProductos(p->info.listaProductos);
-        mostrarListaProvincias(p->info.listaProvincias);
-
+        std::cout << std::endl;
         // Avanzar al siguiente dock
         p = p->sig;
     }
@@ -164,8 +165,7 @@ void mostrarListaProductos(NodoSub<T> *listaProductos)
     // Recorrer la sublista de productos
     while (p != nullptr)
     {
-        std::cout << "\tProducto: " << p->info.nombre << std::endl;
-        std::cout << "\tCantidad: " << p->info.cantidad << std::endl;
+        std::cout << std::left << std::setw(20) << p->info.nombre << p->info.cantidad << std::endl;
 
         // Avanzar al siguiente producto
         p = p->sig;
@@ -181,14 +181,42 @@ void mostrarListaProvincias(NodoSubProvincia<T> *listaProvincias)
     // Recorrer la sublista de productos
     while (p != nullptr)
     {
-        std::cout << "\tProvincia: " << p->info.nombre << std::endl;
-        std::cout << "\tCantidad: " << p->info.cantidad << std::endl;
+        std::cout << std::left << std::setw(20) << p->info.nombre << p->info.cantidad << std::endl;
 
         // Avanzar la siguiente provincia
         p = p->sig;
     }
 }
 
+template <typename T>
+void mostrarDockMenorDespacho(Nodo<T> *lista, int nroDock){
+    Nodo<T> *p = lista;
+
+    // Recorrer la lista de docks
+    while (p != nullptr){
+        if(p->info.nroDock == nroDock){
+            std::cout << "El dock con menos despachos es: " << p->info.nroDock << " con: " << p->info.cantDespacho << " despachos" <<  std::endl;
+            
+                 NodoSub<T> *pSubListProd = p->info.listaProductos;
+                std::string prodMayorDespacho;
+                int mayorCantidad = 0;
+                while (pSubListProd != nullptr)
+                {
+                    if(pSubListProd -> info.cantidad > mayorCantidad){
+                        mayorCantidad = pSubListProd->info.cantidad;
+                        prodMayorDespacho = pSubListProd->info.nombre;
+                    }
+                    pSubListProd = pSubListProd->sig;
+                }
+            std::cout << "El producto con mayor cantidad de despachos en ese dock es: " <<  std::endl;
+            std::cout << prodMayorDespacho << "  " << mayorCantidad << std::endl;
+            std::cout << "Lista de despachos " <<  std::endl;
+            std::cout << std::left << std::setw(20) << "Provincia" << "Cantidad" << std::endl;
+            mostrarListaProvincias(p->info.listaProvincias);
+        }
+        p = p->sig;
+    }
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Funcion buscarInsertarDock
@@ -328,37 +356,45 @@ int main(int argc, char const *argv[])
                 | Cant:25      |       | Cant:50      |       | Cant:10      |       | Cant:75      |
                 |______________|       |______________|       |______________|       |______________|
 
-        Las variables que vamos a obtenr de aca van a ser ND que apunta a la lista y I iterador
-
     */
 
-    // Inicializamos la lista de archivos
+    /////////////////////////////// Inicializamos la lista de archivos ///////////////////////////////
     NodoArchivo<std::string> *listaArchivos = nullptr;
 
     // Creamos algunos docks para insertar en la lista
     DockArchivo<std::string> dock1(1, "Corrientes", "Taladro", 25);
-    DockArchivo<std::string> dock2(2, "Buenos Aires", "Martillo", 50);
-    DockArchivo<std::string> dock3(3, "Mendoza", "Sierra", 10);
-    DockArchivo<std::string> dock4(4, "Rosario", "Destornillador", 75);
     DockArchivo<std::string> dock5(1, "Buenos Aires", "Taladro", 25);
     DockArchivo<std::string> dock6(1, "Chubut", "Martillo", 5);
     DockArchivo<std::string> dock7(1, "Buenos Aires", "Sierra", 5);
 
-    // Agregamos los docks a la lista
-    agregarNodo(listaArchivos, dock1);
-    agregarNodo(listaArchivos, dock2);
-    agregarNodo(listaArchivos, dock3);
-    agregarNodo(listaArchivos, dock4);
-    agregarNodo(listaArchivos, dock5);
-    agregarNodo(listaArchivos, dock6);
-    agregarNodo(listaArchivos, dock7);
+    DockArchivo<std::string> dock2(2, "Buenos Aires", "Martillo", 50);
+    DockArchivo<std::string> dock13(2, "Buenos Aires", "Sierra", 50);
+    DockArchivo<std::string> dock8(2, "Misiones", "Taladro", 13);
 
+    DockArchivo<std::string> dock3(3, "Mendoza", "Sierra", 10);
+    DockArchivo<std::string> dock9(3, "Corrientes", "Martillo", 10);
+    DockArchivo<std::string> dock10(3, "Mendoza", "Sierra", 10);
+    DockArchivo<std::string> dock14(3, "Mendoza", "Sierra", 10);
+
+    DockArchivo<std::string> dock4(4, "Rosario", "Martillo", 20);
+    DockArchivo<std::string> dock11(4, "Buenos Aires", "Taladro", 15);
+    DockArchivo<std::string> dock12(4, "Chubut", "Destornillador", 17);
+    DockArchivo<std::string> dock15(4, "Chubut", "Destornillador", 17);
+
+
+    // Agregamos los docks a la lista
+    agregarNodo(listaArchivos, dock1); agregarNodo(listaArchivos, dock8);
+    agregarNodo(listaArchivos, dock2); agregarNodo(listaArchivos, dock9);
+    agregarNodo(listaArchivos, dock3); agregarNodo(listaArchivos, dock10);
+    agregarNodo(listaArchivos, dock4); agregarNodo(listaArchivos, dock11);
+    agregarNodo(listaArchivos, dock5); agregarNodo(listaArchivos, dock12);
+    agregarNodo(listaArchivos, dock6); agregarNodo(listaArchivos, dock13);
+    agregarNodo(listaArchivos, dock7); agregarNodo(listaArchivos, dock14);
+    agregarNodo(listaArchivos, dock15);
     
-    // Mostramos la lista
-    mostrarLista(listaArchivos);
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Cargamos la nueva lista y sublista
-    // Por ejemplo, si usas 'std::string' como tipo para los nombres de los productos y docks
     Nodo<std::string> *listaDocTotales = nullptr; // Lista de nodos que contiene Docks
     Dock<std::string> dc;                         // Un dock específico
     Producto<std::string> prod;                   // Un producto específico
@@ -370,7 +406,6 @@ int main(int argc, char const *argv[])
 
     while (nd != nullptr)
     {
-        std::cout << "Dock: " << nd->info.nroDock << std::endl; // Imprime el número de dock
         dc.nroDock = nd->info.nroDock;                          // Carga la estructura del doc con el numero.
         dc.cantDespacho = 0;                                    // Carga la estructura del doc con la cantidad de despachos que se van a ir acumulando.
 
@@ -378,7 +413,7 @@ int main(int argc, char const *argv[])
         Nodo<std::string> *pSub = buscarInsertarDock(listaDocTotales, dc);
 
         // a la lista creada acumulamos 1
-        pSub->info.cantDespacho += 1; // controlar que exista XXXXXX
+        pSub->info.cantDespacho += 1;
 
         prod.nombre = nd->info.producto; // Cargamos la subestructura con el producto.
 
@@ -417,8 +452,8 @@ int main(int argc, char const *argv[])
         }
         pSublist = pSublist->sig;  // Avanzamos al siguiente nodo
     }
-    
-    std::cout << "Dock con menor cantidad de despachos: " << dockMenorDespachos << std::endl;
+
+    mostrarDockMenorDespacho(listaDocTotales, dockMenorDespachos);
 
     return 0;
 }
