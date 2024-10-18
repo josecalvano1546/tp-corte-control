@@ -25,6 +25,30 @@ struct NodoSub
     NodoSub(Producto<T> _info) : info(_info), sig(nullptr) {}
 };
 
+
+// Definicion de la estructura ciudad
+template <typename T>
+struct Provincia
+{
+    T nombre;          // Cambiado a 'T' para permitir flexibilidad en el tipo (ej: string para el nombre)
+    unsigned cantidad; // Acumulará la cantidad de ese producto ej: 300
+
+    // Constructor para inicializar valores
+    Provincia() : nombre(""), cantidad(0) {}  // Constructor por defecto
+    Provincia(T _nombre, unsigned _cantidad) : nombre(_nombre), cantidad(_cantidad) {}
+};
+
+// Definición del nodo que contiene Ciudades 
+template <typename T>
+struct NodoSubProvincia
+{
+    Provincia<T> info; // Estructura de una ciudad
+    NodoSubProvincia<T> *sig;  // Puntero al siguiente subNodo [ciudad:corrientes]-->[Ciudad:BsAs]-->null
+
+    // Constructor para inicializar un NodoSubCiudad
+    NodoSubProvincia(Provincia<T> _info) : info(_info), sig(nullptr) {}
+};
+
 // Definición de la estructura Dock
 template <typename T>
 struct Dock
@@ -32,9 +56,10 @@ struct Dock
     unsigned nroDock;           // Número del dock ej: 1
     int cantDespacho;           // Acumulador para la cantidad de despachos
     NodoSub<T> *listaProductos; // Puntero a la lista de productos (nodos) [Producto:Taladro]-->[Producto:Martillo]-->null
+    NodoSubProvincia<T> *listaProvincias; // Puntero a la lista de productos (nodos) [Producto:Taladro]-->[Producto:Martillo]-->null
 
-    Dock() : nroDock(0), cantDespacho(0), listaProductos(nullptr) {}  // Constructor por defecto
-    Dock(unsigned _nroDock) : nroDock(_nroDock), cantDespacho(0), listaProductos(nullptr) {}
+    Dock() : nroDock(0), cantDespacho(0), listaProductos(nullptr), listaProvincias(nullptr) {}
+    Dock(unsigned _nroDock) : nroDock(_nroDock), cantDespacho(0), listaProductos(nullptr), listaProvincias(nullptr) {}
 };
 
 // Definición del nodo que contiene Docks
@@ -124,6 +149,7 @@ void mostrarListaDocks(Nodo<T> *lista)
 
         // Mostrar la sublista de productos dentro de este dock
         mostrarListaProductos(p->info.listaProductos);
+        mostrarListaProvincias(p->info.listaProvincias);
 
         // Avanzar al siguiente dock
         p = p->sig;
@@ -142,6 +168,23 @@ void mostrarListaProductos(NodoSub<T> *listaProductos)
         std::cout << "\tCantidad: " << p->info.cantidad << std::endl;
 
         // Avanzar al siguiente producto
+        p = p->sig;
+    }
+}
+
+// Mostrar lista anidada
+template <typename T>
+void mostrarListaProvincias(NodoSubProvincia<T> *listaProvincias)
+{
+    NodoSubProvincia<T> *p = listaProvincias;
+
+    // Recorrer la sublista de productos
+    while (p != nullptr)
+    {
+        std::cout << "\tProvincia: " << p->info.nombre << std::endl;
+        std::cout << "\tCantidad: " << p->info.cantidad << std::endl;
+
+        // Avanzar la siguiente provincia
         p = p->sig;
     }
 }
@@ -230,6 +273,49 @@ NodoSub<T> *buscarInsertarSubProd(NodoSub<T> *&lista, Producto<T> prodInfo)
     }
 }
 
+// Funcion buscarInsertar en la sublista provincia
+template <typename T>
+NodoSubProvincia<T> *buscarInsertarSubProv(NodoSubProvincia<T> *&lista, Provincia<T> provInfo)
+{
+    NodoSubProvincia<T> *anterior = lista;
+    NodoSubProvincia<T> *p = lista;
+
+    while (p != nullptr && p->info.nombre < provInfo.nombre)
+    {
+        anterior = p;
+        p = p->sig;
+    }
+    if (p != nullptr && provInfo.nombre == p->info.nombre)
+    {
+        return p;
+    }
+    else
+    {
+        NodoSubProvincia<T> *n = new NodoSubProvincia<T>(provInfo);
+        n->info = provInfo;
+        n->sig = p;
+        if (p != lista)
+        {
+            if (anterior != nullptr)
+            {
+                anterior->sig = n; // Conectar el nodo anterior con el nuevo nodo
+            }
+            else
+            {
+                lista = n; // Si `anterior` es null, significa que `n` es el nuevo primer nodo
+            }
+        }
+        else
+        {
+            lista = n;
+        }
+
+        return n;
+    }
+}
+
+
+
 int main(int argc, char const *argv[])
 {
     /* code */
@@ -276,6 +362,7 @@ int main(int argc, char const *argv[])
     Nodo<std::string> *listaDocTotales = nullptr; // Lista de nodos que contiene Docks
     Dock<std::string> dc;                         // Un dock específico
     Producto<std::string> prod;                   // Un producto específico
+    Provincia<std::string> prov;                   // Una Provincia específica
 
     // Punteros a nuestra lista inicial
     NodoArchivo<std::string> *p = listaArchivos;
@@ -301,11 +388,37 @@ int main(int argc, char const *argv[])
         // Asigno la cantidad acumulando
         pSubProducto->info.cantidad += nd->info.cantidad;
 
+        // -- Provincia --- //
+        prov.nombre = nd->info.provincia; // Cargamos la subestructura con el provincia.
+
+        // Buscar insertar en la sublista de Docks es decir en CIUDADES.
+        NodoSubProvincia<std::string> *pSubProvincia = buscarInsertarSubProv(pSub->info.listaProvincias, prov);
+
+        // Asigno la cantidad acumulando
+        pSubProvincia->info.cantidad += nd->info.cantidad;
+
         // Hasta aca deberia estar cargada la sublista. y sus valores
         nd = nd->sig; // Avanza al siguiente nodo
     };
 
     mostrarListaDocks(listaDocTotales);
+
+    int dockMenorDespachos = 10000;
+    int menorCantidad = 1000;
+
+    Nodo<std::string> *pSublist = listaDocTotales;
+
+    while (pSublist != nullptr)
+    {
+        if (pSublist->info.cantDespacho < menorCantidad) // Va a guardar el primero si hay varios siempre muestro el primero.
+        {
+            menorCantidad = pSublist->info.cantDespacho;   // Actualizamos la menor cantidad
+            dockMenorDespachos = pSublist->info.nroDock;  // Guardamos el nroDock con menor cantidad
+        }
+        pSublist = pSublist->sig;  // Avanzamos al siguiente nodo
+    }
+    
+    std::cout << "Dock con menor cantidad de despachos: " << dockMenorDespachos << std::endl;
 
     return 0;
 }
